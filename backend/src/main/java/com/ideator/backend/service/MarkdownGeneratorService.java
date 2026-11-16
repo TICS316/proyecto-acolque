@@ -162,7 +162,7 @@ public class MarkdownGeneratorService {
         sb.append("```yaml\n");
         sb.append("version: '3.8'\nservices:\n  backend:\n    build: ./backend\n    ports:\n      - \"8080:8080\"\n    environment:\n      - SPRING_PROFILES_ACTIVE=prod\n  frontend:\n    build: ./frontend\n    ports:\n      - \"80:80\"\n  postgres:\n    image: postgres:15\n    environment:\n      - POSTGRES_DB=ideator\n      - POSTGRES_USER=ideator\n      - POSTGRES_PASSWORD=password\n    volumes:\n      - pgdata:/var/lib/postgresql/data\nvolumes:\n  pgdata:\n```\n\n");
         sb.append("## Estrategia de Consumo de Azure AI\n");
-        sb.append("Se utiliza el servicio `AzureAiChatService` que consume los modelos LLM de Azure OpenAI con `temperature=0` para obtener respuestas determinísticas.\n");
+        sb.append("Se utiliza el servicio orquestador `FoundryAgentOrchestratorService` y `AzureAiChatService` para consumir de forma desacoplada los 5 agentes especializados alojados en Microsoft Azure AI Foundry (ideator-context-agent, ideator-db-agent, ideator-api-agent, ideator-ui-agent, ideator-arch-agent).\n");
 
         // Recuperar AzureOpenAiKey si SecretClient está configurado
         String key = retrieveAzureOpenAiKey();

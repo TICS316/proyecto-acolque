@@ -18,14 +18,21 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
-@EnableConfigurationProperties(AzureOpenAIProperties.class)
+@EnableConfigurationProperties({AzureOpenAIProperties.class, AzureFoundryProperties.class})
 @Slf4j
 public class AzureAIConfig {
 
     @Value("${azure.keyvault.uri:https://kv-ideator-ac2500.vault.azure.net/}")
     private String keyVaultUri;
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 
     @Bean
     @ConditionalOnMissingBean

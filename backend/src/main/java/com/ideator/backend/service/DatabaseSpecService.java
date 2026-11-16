@@ -1,9 +1,6 @@
-// SCRUM-69: Service that calls Azure OpenAI to generate a physical relational DB model from Phase‑A decisions.
+// SCRUM-69: Servicio que consume ideator-db-agent en Microsoft Foundry para generar el modelo relacional físico.
 package com.ideator.backend.service;
 
-import com.ideator.backend.config.AzureOpenAIProperties;
-import com.ideator.backend.dto.AiAnalysisResponse;
-import com.ideator.backend.service.AzureAiChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,41 +8,35 @@ import org.springframework.stereotype.Service;
 /**
  * SCRUM-69 – DatabaseSpecService
  *
- * Invoca a Azure OpenAI con un System Prompt que transforma las decisiones de la
- * fase A (problema, cliente, alcance MVP, etc.) en una propuesta de modelo
- * relacional físico (tablas, columnas, tipos, PK/FK) serializada en JSON.
+ * Invoca al agente especializado ideator-db-agent (fase DB) a través de
+ * {@link FoundryAgentOrchestratorService} para transformar las decisiones de la
+ * fase A en una propuesta de modelo relacional físico (tablas, columnas, tipos, PK/FK)
+ * serializada en JSON.
  *
- * En una implementación productiva se debería validar y versionar el JSON.
+ * Las directivas y reglas del modelo físico están encapsuladas directamente en el agente
+ * configurado en Microsoft Azure AI Foundry, eliminando prompts hardcodeados en el backend.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class DatabaseSpecService {
 
-    private final AzureAiChatService azureAiChatService;
-    private final AzureOpenAIProperties properties;
+    private final FoundryAgentOrchestratorService orchestratorService;
 
     /**
      * Genera la especificación física de la base de datos a partir del análisis
-     * interno recibido de la fase A.
+     * interno recibido de la fase A invocando al agente ideator-db-agent.
      *
-     * @param analysisInternal el texto de análisis interno (ej. "analisisInterno" del
-     *                         AiAnalysisResponse de la fase A)
+     * @param analysisInternal el texto de análisis interno de la fase A
      * @return JSON con la propuesta de modelo relacional
      */
     public String generatePhysicalModel(String analysisInternal) {
-        String prompt = "You are a strict system that must translate the following internal analysis into a physical relational database model. " +
-                "Return a single JSON object with the keys: tables (array), each table has name, columns (array of {name, type, nullable, primaryKey, foreignKey}), " +
-                "and relationships (array of {sourceTable, sourceColumn, targetTable, targetColumn}). No explanation, only the JSON.\n" +
-                "Analysis: " + analysisInternal;
         try {
-            // Re‑use AzureAiChatService but force temperature to 0 for deterministic output
-            AiAnalysisResponse response = azureAiChatService.chat(prompt);
-            // In this simplified version we assume the model returns the JSON directly in respuestaAlUsuario
-            return response.getRespuestaAlUsuario();
+            String response = orchestratorService.callAgent(AgentPhase.DB, analysisInternal);
+            return (response != null && !response.isBlank()) ? response : "{\"tables\": []}";
         } catch (Exception e) {
-            log.error("Error generating DB spec", e);
-            return "{}"; // fallback empty JSON
+            log.error("Error al generar especificación de BD con ideator-db-agent", e);
+            return "{\"tables\": []}";
         }
     }
 }

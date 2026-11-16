@@ -12,10 +12,12 @@ spring:
 
   jpa:
     open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
         jdbc:
           time_zone: UTC
@@ -46,3 +48,12 @@ azure:
     endpoint: ${AZURE_OPENAI_ENDPOINT:https://ideator-colque-resource.openai.azure.com/openai/v1}
     api-key: ${AZURE_OPENAI_KEY:}
     deployment: ${AZURE_OPENAI_DEPLOYMENT:gpt-4o}
+  foundry:
+    project-endpoint: ${AZURE_FOUNDRY_ENDPOINT:https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque}
+    api-version: 2025-05-15-preview
+    agents:
+      context: ideator-context-agent
+      db: ideator-db-agent
+      api: ideator-api-agent
+      ui: ideator-ui-agent
+      architecture: ideator-arch-agent
