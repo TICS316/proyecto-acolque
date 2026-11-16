@@ -64,12 +64,17 @@ public class AzureAIConfig {
             }
         }
 
+        if (!StringUtils.hasText(apiKey)) {
+            log.warn("Azure OpenAI no inicializado: no se configuró 'azure.openai.api-key' ni se pudo obtener desde Key Vault.");
+            return null;
+        }
+
         log.info("Azure OpenAI configurado para el endpoint {} (deployment: {})",
                 properties.endpoint(), properties.deployment());
 
         return new OpenAIClientBuilder()
                 .endpoint(properties.endpoint())
-                .credential(new AzureKeyCredential(apiKey != null ? apiKey : ""))
+                .credential(new AzureKeyCredential(apiKey))
                 .buildClient();
     }
 

@@ -3,7 +3,7 @@ spring:
     name: ideator-api
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ideator_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5434}/ideator_db}
     username: ${SPRING_DATASOURCE_USERNAME:ideator_user}
     password: ${SPRING_DATASOURCE_PASSWORD:ideator_pass}
     hikari:
