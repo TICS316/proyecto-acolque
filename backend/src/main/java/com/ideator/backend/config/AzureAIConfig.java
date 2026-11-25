@@ -25,13 +25,17 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class AzureAIConfig {
 
-    @Value("${azure.keyvault.uri:https://kv-ideator-ac2500.vault.azure.net/}")
+    @Value("${azure.keyvault.uri:}")
     private String keyVaultUri;
 
     @Bean
     @ConditionalOnMissingBean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(30000);
+        factory.setReadTimeout(90000);
+        return new RestTemplate(factory);
     }
 
     @Bean
@@ -69,11 +73,18 @@ public class AzureAIConfig {
             return null;
         }
 
+        String endpoint = properties.endpoint();
+        if (endpoint != null && endpoint.endsWith("/openai/v1")) {
+            endpoint = endpoint.substring(0, endpoint.length() - "/openai/v1".length());
+        } else if (endpoint != null && endpoint.endsWith("/openai/v1/")) {
+            endpoint = endpoint.substring(0, endpoint.length() - "/openai/v1/".length());
+        }
+
         log.info("Azure OpenAI configurado para el endpoint {} (deployment: {})",
-                properties.endpoint(), properties.deployment());
+                endpoint, properties.deployment());
 
         return new OpenAIClientBuilder()
-                .endpoint(properties.endpoint())
+                .endpoint(endpoint)
                 .credential(new AzureKeyCredential(apiKey))
                 .buildClient();
     }

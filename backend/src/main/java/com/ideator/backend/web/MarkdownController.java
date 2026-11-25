@@ -23,9 +23,18 @@ public class MarkdownController {
         this.markdownGeneratorService = markdownGeneratorService;
     }
 
+    private Long parseProjectId(String projectId) {
+        try {
+            return Long.parseLong(projectId);
+        } catch (NumberFormatException e) {
+            return (long) Math.abs(projectId.hashCode());
+        }
+    }
+
     @GetMapping("/{projectId}/markdown/product")
-    public ResponseEntity<String> getProductSpecification(@PathVariable Long projectId) {
-        String markdownContent = markdownGeneratorService.generateProductSpecification(projectId);
+    public ResponseEntity<String> getProductSpecification(@PathVariable String projectId) {
+        Long id = parseProjectId(projectId);
+        String markdownContent = markdownGeneratorService.generateProductSpecification(id);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Especificacion_Producto.md\"")
@@ -34,14 +43,23 @@ public class MarkdownController {
                 .body(markdownContent);
     }
 
+    public ResponseEntity<String> getProductSpecification(Long projectId) {
+        return getProductSpecification(String.valueOf(projectId));
+    }
+
     @GetMapping("/{projectId}/markdown/architecture")
-    public ResponseEntity<String> getArchitectureSpecification(@PathVariable Long projectId) {
-        String markdownContent = markdownGeneratorService.generateArchitectureSpecification(projectId);
+    public ResponseEntity<String> getArchitectureSpecification(@PathVariable String projectId) {
+        Long id = parseProjectId(projectId);
+        String markdownContent = markdownGeneratorService.generateArchitectureSpecification(id);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Arquitectura_Definitiva.md\"")
                 .header(HttpHeaders.CONTENT_TYPE, "text/markdown; charset=UTF-8")
                 .contentType(MediaType.parseMediaType("text/markdown; charset=UTF-8"))
                 .body(markdownContent);
+    }
+
+    public ResponseEntity<String> getArchitectureSpecification(Long projectId) {
+        return getArchitectureSpecification(String.valueOf(projectId));
     }
 }

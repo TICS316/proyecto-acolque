@@ -69,7 +69,7 @@ public class FoundryAgentOrchestratorService {
     public String buildEndpointUrl(AgentPhase phase) {
         String base = properties.getProjectEndpoint();
         if (base == null || base.isBlank()) {
-            base = "https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque";
+            base = "https://acolque-6927-resource.services.ai.azure.com/api/projects/acolque-4355";
         }
         if (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
@@ -223,10 +223,10 @@ public class FoundryAgentOrchestratorService {
                     }
                 }
                 if (!sb.isEmpty()) {
-                    return sb.toString().trim();
+                    return cleanJson(sb.toString().trim());
                 }
             } else if (outputNode.isTextual()) {
-                return outputNode.asText().trim();
+                return cleanJson(outputNode.asText().trim());
             }
 
             // 2. Protocolo OpenAI Chat Completions: choices[0].message.content
@@ -234,21 +234,67 @@ public class FoundryAgentOrchestratorService {
             if (choicesNode.isArray() && !choicesNode.isEmpty()) {
                 JsonNode messageNode = choicesNode.get(0).path("message");
                 if (messageNode.has("content") && !messageNode.path("content").isNull()) {
-                    return messageNode.path("content").asText().trim();
+                    return cleanJson(messageNode.path("content").asText().trim());
                 }
             }
 
             // 3. Campos directos
             for (String field : List.of("response", "output_text", "text", "content", "message")) {
                 if (root.has(field) && !root.path(field).isNull() && root.path(field).isTextual()) {
-                    return root.path(field).asText().trim();
+                    return cleanJson(root.path(field).asText().trim());
                 }
             }
 
-            return responseJson.trim();
+            return cleanJson(responseJson.trim());
         } catch (Exception e) {
             log.debug("No se pudo interpretar como JSON, retornando texto plano: {}", e.getMessage());
-            return responseJson.trim();
+            return cleanJson(responseJson.trim());
         }
+    }
+
+    /**
+     * Sanitiza el texto devuelto por el modelo LLM, eliminando bloques markdown (```json ... ```)
+     * y extrayendo el contenido JSON delimitado por llaves o corchetes para evitar fallos de deserialización.
+     */
+    public static String cleanJson(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return "";
+        }
+        String trimmed = raw.trim();
+
+        // 1. Eliminar fences de código markdown si existen
+        if (trimmed.startsWith("```")) {
+            int firstNewline = trimmed.indexOf('\n');
+            if (firstNewline != -1) {
+                trimmed = trimmed.substring(firstNewline + 1);
+            }
+            if (trimmed.endsWith("```")) {
+                trimmed = trimmed.substring(0, trimmed.length() - 3);
+            }
+            trimmed = trimmed.trim();
+        }
+
+        // 2. Extraer el bloque JSON más externo {...} o [...] si viene acompañado de texto o reasoning
+        int firstBrace = trimmed.indexOf('{');
+        int firstBracket = trimmed.indexOf('[');
+        int start = -1;
+        if (firstBrace != -1 && firstBracket != -1) {
+            start = Math.min(firstBrace, firstBracket);
+        } else if (firstBrace != -1) {
+            start = firstBrace;
+        } else if (firstBracket != -1) {
+            start = firstBracket;
+        }
+
+        if (start != -1) {
+            int lastBrace = trimmed.lastIndexOf('}');
+            int lastBracket = trimmed.lastIndexOf(']');
+            int end = Math.max(lastBrace, lastBracket);
+            if (end > start) {
+                return trimmed.substring(start, end + 1).trim();
+            }
+        }
+
+        return trimmed;
     }
 }

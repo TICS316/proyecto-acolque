@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 public class AzureFoundryProperties {
 
-    private String projectEndpoint = "https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque";
+    private String projectEndpoint;
     private String apiVersion = "2025-05-15-preview";
     private Agents agents = new Agents();
 
@@ -18,7 +18,10 @@ public class AzureFoundryProperties {
         private String db = "ideator-db-agent";
         private String api = "ideator-api-agent";
         private String ui = "ideator-ui-agent";
+        private String security = "ideator-sec-agent";
+        private String qa = "ideator-qa-agent";
         private String architecture = "ideator-arch-agent";
+        private String finops = "ideator-finops-agent";
     }
 
     public String getAgentName(AgentPhase phase) {
@@ -30,7 +33,10 @@ public class AzureFoundryProperties {
             case DB -> agents != null && agents.getDb() != null ? agents.getDb() : "ideator-db-agent";
             case API -> agents != null && agents.getApi() != null ? agents.getApi() : "ideator-api-agent";
             case UI -> agents != null && agents.getUi() != null ? agents.getUi() : "ideator-ui-agent";
+            case SECURITY -> agents != null && agents.getSecurity() != null ? agents.getSecurity() : "ideator-sec-agent";
+            case QA -> agents != null && agents.getQa() != null ? agents.getQa() : "ideator-qa-agent";
             case ARCHITECTURE -> agents != null && agents.getArchitecture() != null ? agents.getArchitecture() : "ideator-arch-agent";
+            case FINOPS -> agents != null && agents.getFinops() != null ? agents.getFinops() : "ideator-finops-agent";
         };
     }
 }

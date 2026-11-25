@@ -34,11 +34,14 @@ azure:
     api-key: test-api-key-not-real
     deployment: test-deployment
   foundry:
-    project-endpoint: https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque
+    project-endpoint: https://ideator-colque-resource.services.ai.azure.com/api/projects/acolque-4355
     api-version: 2025-05-15-preview
     agents:
       context: ideator-context-agent
       db: ideator-db-agent
       api: ideator-api-agent
       ui: ideator-ui-agent
+      security: ideator-sec-agent
+      qa: ideator-qa-agent
       architecture: ideator-arch-agent
+      finops: ideator-finops-agent

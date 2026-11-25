@@ -27,4 +27,14 @@ dist-ssr
 target/
 **/target/
 
+# Environment variables
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+
+# Sustentación & notas locales
+preguntas.md
+
 

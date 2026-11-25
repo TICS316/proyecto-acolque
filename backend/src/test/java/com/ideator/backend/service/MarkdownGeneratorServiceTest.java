@@ -98,10 +98,13 @@ class MarkdownGeneratorServiceTest {
 
         assertNotNull(arch);
         assertTrue(arch.contains("# Arquitectura Definitiva"));
+        assertTrue(arch.contains("## Seguridad y Mitigación de Amenazas (OWASP & Key Vault)"));
+        assertTrue(arch.contains("## Plan de Pruebas y Aseguramiento de Calidad (QA)"));
         assertTrue(arch.contains("## Justificación Técnica"));
         assertTrue(arch.contains("## Diagrama de Arquitectura"));
         assertTrue(arch.contains("## Configuración Docker"));
         assertTrue(arch.contains("## Estrategia de Consumo de Azure AI"));
+        assertTrue(arch.contains("## Presupuesto y Estimación de Costos Cloud (FinOps)"));
         assertTrue(arch.contains("Clave AzureOpenAiKey recuperada exitosamente desde Azure Key Vault."));
         verify(secretClient, times(1)).getSecret("AzureOpenAiKey");
     }

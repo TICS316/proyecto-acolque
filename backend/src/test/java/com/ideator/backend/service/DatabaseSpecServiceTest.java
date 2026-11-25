@@ -57,6 +57,7 @@ class DatabaseSpecServiceTest {
         String result = databaseSpecService.generatePhysicalModel("Análisis");
 
         assertNotNull(result);
-        assertEquals("{\"tables\": []}", result);
+        assertTrue(result.contains("tables"));
+        assertTrue(result.contains("erdSvg"));
     }
 }

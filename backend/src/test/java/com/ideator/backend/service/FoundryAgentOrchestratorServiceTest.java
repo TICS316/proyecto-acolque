@@ -46,7 +46,10 @@ class FoundryAgentOrchestratorServiceTest {
         agents.setDb("ideator-db-agent");
         agents.setApi("ideator-api-agent");
         agents.setUi("ideator-ui-agent");
+        agents.setSecurity("ideator-sec-agent");
+        agents.setQa("ideator-qa-agent");
         agents.setArchitecture("ideator-arch-agent");
+        agents.setFinops("ideator-finops-agent");
         properties.setAgents(agents);
 
         openAIProperties = new AzureOpenAIProperties("https://test.openai.azure.com", "fallback-key", "gpt-4o");
@@ -74,8 +77,20 @@ class FoundryAgentOrchestratorServiceTest {
                 service.buildEndpointUrl(AgentPhase.UI)
         );
         assertEquals(
+                "https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque/agents/ideator-sec-agent/endpoint/protocols/openai/responses?api-version=2025-05-15-preview",
+                service.buildEndpointUrl(AgentPhase.SECURITY)
+        );
+        assertEquals(
+                "https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque/agents/ideator-qa-agent/endpoint/protocols/openai/responses?api-version=2025-05-15-preview",
+                service.buildEndpointUrl(AgentPhase.QA)
+        );
+        assertEquals(
                 "https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque/agents/ideator-arch-agent/endpoint/protocols/openai/responses?api-version=2025-05-15-preview",
                 service.buildEndpointUrl(AgentPhase.ARCHITECTURE)
+        );
+        assertEquals(
+                "https://ideator-colque-resource.services.ai.azure.com/api/projects/ideator-colque/agents/ideator-finops-agent/endpoint/protocols/openai/responses?api-version=2025-05-15-preview",
+                service.buildEndpointUrl(AgentPhase.FINOPS)
         );
     }
 

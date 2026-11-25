@@ -16,10 +16,10 @@ import java.util.List;
 /**
  * SCRUM-73 – MarkdownGeneratorService
  *
- * Compila toda la información almacenada (Fases A‑E) en PostgreSQL y genera dos
+ * Compila toda la información almacenada (Fases A‑H) en PostgreSQL y genera dos
  * documentos Markdown que cumplen con los entregables del proyecto:
- *   1️⃣ {@code Especificacion_Producto.md}
- *   2️⃣ {@code Arquitectura_Definitiva.md}
+ *   1️⃣ {@code Especificacion_Producto.md} (Fases A, B, C, D)
+ *   2️⃣ {@code Arquitectura_Definitiva.md} (Fases E: Security, F: QA, G: Architecture, H: FinOps)
  *
  * Inyecta SecretClient para recuperar la clave AzureOpenAiKey de Azure Key Vault.
  */
@@ -32,6 +32,9 @@ public class MarkdownGeneratorService {
     private final DatabaseSpecService databaseSpecService; // from SCRUM‑69
     private final UiMapService uiMapService;               // from SCRUM‑71
     private final ArchitectureSpecService architectureSpecService; // from SCRUM‑72
+    private final SecuritySpecService securitySpecService; // Fase E: Ciberseguridad
+    private final QaSpecService qaSpecService;             // Fase F: QA & Testing
+    private final FinopsSpecService finopsSpecService;     // Fase H: FinOps
     private final SecretClient secretClient;
 
     public MarkdownGeneratorService(ChatMessageRepository chatMessageRepository,
@@ -39,7 +42,18 @@ public class MarkdownGeneratorService {
                                     DatabaseSpecService databaseSpecService,
                                     UiMapService uiMapService,
                                     ArchitectureSpecService architectureSpecService) {
-        this(chatMessageRepository, endpointSpecRepository, databaseSpecService, uiMapService, architectureSpecService, null);
+        this(chatMessageRepository, endpointSpecRepository, databaseSpecService, uiMapService, architectureSpecService,
+                new SecuritySpecService(), new QaSpecService(), new FinopsSpecService(), null);
+    }
+
+    public MarkdownGeneratorService(ChatMessageRepository chatMessageRepository,
+                                    EndpointSpecRepository endpointSpecRepository,
+                                    DatabaseSpecService databaseSpecService,
+                                    UiMapService uiMapService,
+                                    ArchitectureSpecService architectureSpecService,
+                                    SecretClient secretClient) {
+        this(chatMessageRepository, endpointSpecRepository, databaseSpecService, uiMapService, architectureSpecService,
+                new SecuritySpecService(), new QaSpecService(), new FinopsSpecService(), secretClient);
     }
 
     @Autowired
@@ -48,12 +62,18 @@ public class MarkdownGeneratorService {
                                     DatabaseSpecService databaseSpecService,
                                     UiMapService uiMapService,
                                     ArchitectureSpecService architectureSpecService,
+                                    @Autowired(required = false) SecuritySpecService securitySpecService,
+                                    @Autowired(required = false) QaSpecService qaSpecService,
+                                    @Autowired(required = false) FinopsSpecService finopsSpecService,
                                     @Autowired(required = false) SecretClient secretClient) {
         this.chatMessageRepository = chatMessageRepository;
         this.endpointSpecRepository = endpointSpecRepository;
         this.databaseSpecService = databaseSpecService;
         this.uiMapService = uiMapService;
         this.architectureSpecService = architectureSpecService;
+        this.securitySpecService = securitySpecService != null ? securitySpecService : new SecuritySpecService();
+        this.qaSpecService = qaSpecService != null ? qaSpecService : new QaSpecService();
+        this.finopsSpecService = finopsSpecService != null ? finopsSpecService : new FinopsSpecService();
         this.secretClient = secretClient;
     }
 
@@ -115,6 +135,16 @@ public class MarkdownGeneratorService {
         String dbJson = databaseSpecService.generatePhysicalModel("placeholder analysis");
         sb.append("```json\n").append(dbJson != null ? dbJson : "{}").append("\n```\n\n");
 
+        try {
+            if (dbJson != null) {
+                com.fasterxml.jackson.databind.JsonNode dbRoot = new com.fasterxml.jackson.databind.ObjectMapper().readTree(dbJson);
+                if (dbRoot.has("mermaidDiagram") && !dbRoot.get("mermaidDiagram").asText().isBlank()) {
+                    sb.append("### Diagrama Entidad-Relación (ERD)\n");
+                    sb.append("```mermaid\n").append(dbRoot.get("mermaidDiagram").asText()).append("\n```\n\n");
+                }
+            }
+        } catch (Exception ignored) {}
+
         // Fase C – Endpoints REST
         sb.append("## Endpoints REST\n");
         List<EndpointSpec> endpoints = endpointSpecRepository.findByProjectId(projectId);
@@ -148,21 +178,56 @@ public class MarkdownGeneratorService {
     }
 
     /**
-     * Genera el documento {@code Arquitectura_Definitiva.md} que contiene la
-     * justificación del stack técnico y el plan de despliegue (fase E).
+     * Genera el documento {@code Arquitectura_Definitiva.md} que consolida las fases:
+     * - Fase E: Seguridad y Mitigación de Amenazas (OWASP & Key Vault)
+     * - Fase F: Plan de Pruebas y Aseguramiento de Calidad (QA)
+     * - Fase G: Justificación Técnica, Diagrama y Docker (Arquitectura & DevOps)
+     * - Fase H: Presupuesto y Estimación de Costos Cloud (FinOps)
      */
     public String generateArchitectureSpecification(Long projectId) {
         StringBuilder sb = new StringBuilder();
         sb.append("# Arquitectura Definitiva\n\n");
+
+        // Fase E – Ciberseguridad & AppSec (OWASP & Key Vault)
+        sb.append("## Seguridad y Mitigación de Amenazas (OWASP & Key Vault)\n");
+        sb.append("```json\n").append(securitySpecService.getSecuritySpec(projectId)).append("\n```\n\n");
+
+        // Fase F – QA & Testing
+        sb.append("## Plan de Pruebas y Aseguramiento de Calidad (QA)\n");
+        sb.append("```json\n").append(qaSpecService.getQaSpec(projectId)).append("\n```\n\n");
+
+        // Fase G – Justificación Técnica y Diagrama
         sb.append("## Justificación Técnica\n");
-        sb.append(architectureSpecService.generateArchitectureSpec(projectId)).append("\n\n");
-        sb.append("## Diagrama de Arquitectura\n");
-        sb.append("(Insertar diagrama aquí – en producción usar PlantUML o Mermaid)\n\n");
+        String archJson = architectureSpecService.generateArchitectureSpec(projectId);
+        try {
+            com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper().readTree(archJson);
+            if (root.has("justification")) {
+                sb.append(root.get("justification").asText()).append("\n\n");
+            }
+            sb.append("## Diagrama de Arquitectura\n");
+            if (root.has("mermaidDiagram") && !root.get("mermaidDiagram").asText().isBlank()) {
+                sb.append("```mermaid\n").append(root.get("mermaidDiagram").asText()).append("\n```\n\n");
+            } else {
+                sb.append("(Insertar diagrama aquí – en producción usar PlantUML o Mermaid)\n\n");
+            }
+            if (root.has("deploymentPlan")) {
+                sb.append("## Plan de Despliegue Cloud\n");
+                sb.append(root.get("deploymentPlan").asText()).append("\n\n");
+            }
+        } catch (Exception e) {
+            sb.append(archJson).append("\n\n");
+            sb.append("## Diagrama de Arquitectura\n");
+            sb.append("(Insertar diagrama aquí – en producción usar PlantUML o Mermaid)\n\n");
+        }
         sb.append("## Configuración Docker\n");
         sb.append("```yaml\n");
         sb.append("version: '3.8'\nservices:\n  backend:\n    build: ./backend\n    ports:\n      - \"8080:8080\"\n    environment:\n      - SPRING_PROFILES_ACTIVE=prod\n  frontend:\n    build: ./frontend\n    ports:\n      - \"80:80\"\n  postgres:\n    image: postgres:15\n    environment:\n      - POSTGRES_DB=ideator\n      - POSTGRES_USER=ideator\n      - POSTGRES_PASSWORD=password\n    volumes:\n      - pgdata:/var/lib/postgresql/data\nvolumes:\n  pgdata:\n```\n\n");
         sb.append("## Estrategia de Consumo de Azure AI\n");
-        sb.append("Se utiliza el servicio orquestador `FoundryAgentOrchestratorService` y `AzureAiChatService` para consumir de forma desacoplada los 5 agentes especializados alojados en Microsoft Azure AI Foundry (ideator-context-agent, ideator-db-agent, ideator-api-agent, ideator-ui-agent, ideator-arch-agent).\n");
+        sb.append("Se utiliza el servicio orquestador `FoundryAgentOrchestratorService` para consumir de forma desacoplada los 8 agentes especializados alojados en Microsoft Azure AI Foundry (ideator-context-agent, ideator-db-agent, ideator-api-agent, ideator-ui-agent, ideator-sec-agent, ideator-qa-agent, ideator-arch-agent, ideator-finops-agent).\n\n");
+
+        // Fase H – FinOps & Presupuesto Cloud
+        sb.append("## Presupuesto y Estimación de Costos Cloud (FinOps)\n");
+        sb.append("```json\n").append(finopsSpecService.getFinopsSpec(projectId)).append("\n```\n\n");
 
         // Recuperar AzureOpenAiKey si SecretClient está configurado
         String key = retrieveAzureOpenAiKey();

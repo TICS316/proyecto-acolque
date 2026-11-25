@@ -39,6 +39,7 @@ class AzureAiChatServiceTest {
     @Test
     void chat_ShouldCallContextAgentAndReturnReadyForPhaseB() {
         String agentResponse = """
+        
             {
               "analisisInterno": "Alcance definido correctamente",
               "estado": "LISTO_FASE_B",
