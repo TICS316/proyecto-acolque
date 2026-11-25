@@ -1,292 +1,297 @@
-# Ideator - Monorepo (Sprint 1)
+# Ideator - Plataforma de Arquitectura de Software Asistida por IA
 
-Ideator es una plataforma asistida por IA para convertir ideas de software en especificaciones técnicas.
-Este repositorio es la raíz del monorepo e incluye el backend Spring Boot, el frontend React/Vite y la
-orquestación de PostgreSQL con Docker Compose.
+Plataforma empresarial asistida por Inteligencia Artificial diseñada para transformar ideas de producto en especificaciones técnicas de ingeniería de software completas, rigurosas y ejecutables. 
 
-## Stack
+Integra un **Pipeline Multi-Agente de 8 Fases (A a la H)**, generación de diagramas interactivos en SVG, maquetación visual interactiva en HTML, estimación de costos cloud y una suite de pruebas automatizadas en backend y frontend.
 
-| Capa | Tecnologías |
-| --- | --- |
-| Backend | Java 21, Spring Boot 3.4, Spring Web, Spring Data JPA, Spring Security, JWT (JJWT), PostgreSQL, Azure OpenAI SDK, Lombok |
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, React Router, Axios |
-| Base de datos | PostgreSQL 15 (Docker) |
+> **Estado del Proyecto:** Pipeline Multi-Agente (Fases A → H), Visores Interactivos y Suite de Pruebas Automatizadas completados y verificados.
 
-## Estructura
+---
+
+## Contenido
+
+- [Descripción](#descripción)
+- [Pipeline de Fases Técnicas (A - H)](#pipeline-de-fases-técnicas-a---h)
+- [Arquitectura del Sistema](#arquitectura-del-sistema)
+- [Stack Tecnológico](#stack-tecnológico)
+- [Estructura del Repositorio](#estructura-del-repositorio)
+- [Requisitos Previos](#requisitos-previos)
+- [Inicio Rápido](#inicio-rápido)
+- [Variables de Entorno](#variables-de-entorno)
+- [API REST](#api-rest)
+- [Pruebas Automatizadas y Calidad](#pruebas-automatizadas-y-calidad)
+- [Solución de Problemas](#solución-de-problemas)
+- [Seguridad](#seguridad)
+
+---
+
+## Descripción
+
+**Ideator** permite a arquitectos, product managers y desarrolladores evolucionar conceptos de software hacia documentación técnica de nivel industrial. Mediante la orquestación de agentes especializados (impulsados por **Azure AI Foundry / Azure OpenAI** con modelos de razonamiento y generación como `gpt-4o-mini` y `gpt-5-mini`), el sistema genera especificaciones conectadas y coherentes.
+
+### Capacidades Principales:
+- **Orquestación Multi-Agente:** Cada fase técnica es atendida por un agente especializado con prompts de dominio y validación estructural.
+- **Modo Resiliente / Offline:** Todos los servicios disponen de generadores determinísticos de respaldo (*fallbacks*) en caso de falta de conexión o cuota de API.
+- **Generación Secuencial con 1-Click:** Capacidad de ejecutar el pipeline completo de la Fase A a la H con feedback visual animado en tiempo real.
+- **Artefactos Visuales Interactivos:** 
+  - **Fase D (UI/UX):** Mockup interactivo HTML/CSS en sandbox seguro (`<iframe>`) con selector entre vista previa funcional y código fuente.
+  - **Fase B (Base de Datos):** Diagrama Entidad-Relación (ERD) interactivo en formato SVG descargable.
+  - **Fase G / E (Arquitectura Cloud & DevOps):** Diagrama de topología y microservicios en formato SVG responsivo y descargable.
+- **Exportación Técnica Consolidada:** Generación de un reporte técnico integral en Markdown para el cliente o equipo de desarrollo.
+
+---
+
+## Pipeline de Fases Técnicas (A - H)
+
+| Fase | Nombre | Agente Asignado | Entregable Principal |
+| :---: | :--- | :--- | :--- |
+| **A** | **PRD & Historias de Usuario** | `ideator-prd-agent` | Requerimientos funcionales/no funcionales y criterios Gherkin (`Given-When-Then`). |
+| **B** | **Base de Datos & DDL** | `ideator-db-agent` | Script DDL PostgreSQL (tablas, PK/FK, índices) y **Diagrama ERD en SVG**. |
+| **C** | **Contratos de API REST** | `ideator-api-agent` | Especificación OpenAPI 3.0 / Swagger, schemas JSON y códigos de respuesta. |
+| **D** | **UI/UX & Wireframes** | `ideator-ui-agent` | Mapa de navegación, inventario de pantallas y **Mockup Visual Interactivo en HTML**. |
+| **E** | **Arquitectura & DevOps** | `ideator-arch-agent` | Topología de microservicios, `docker-compose.yml` y **Diagrama de Arquitectura en SVG**. |
+| **F** | **Seguridad & Amenazas** | `ideator-security-agent` | Modelado de amenazas STRIDE, matriz de mitigación y checklist OWASP Top 10. |
+| **G** | **FinOps & Costos Cloud** | `ideator-finops-agent` | Estimación mensual en Azure/AWS, dimensionamiento de instancias y estrategias de ahorro. |
+| **H** | **QA & Plan de Pruebas** | `ideator-qa-agent` | Casos de prueba, matriz de cobertura, tests de regresión y pirámide de pruebas. |
+
+---
+
+## Arquitectura del Sistema
+
+```mermaid
+flowchart TD
+    subgraph Frontend["Frontend SPA (React 18 + Vite 6 + Tailwind)"]
+        UI["Project Dashboard & Stepper (A-H)"]
+        Preview["Interactive Viewers<br/>(SVG ERD, SVG Arch, HTML Wireframes)"]
+        Export["Markdown Consolidator"]
+    end
+
+    subgraph Backend["Backend API (Spring Boot 3.4.5 + Java 21)"]
+        AuthFilter["JWT Security Filter"]
+        Controllers["REST Controllers<br/>(Project, Phase, Chat, Markdown)"]
+        Orchestrator["FoundryAgentOrchestratorService"]
+        SpecServices["Phase Specification Services<br/>(PRD, DB, API, UI, Arch, Sec, FinOps, QA)"]
+    end
+
+    subgraph Database["Persistencia Local"]
+        PG[("PostgreSQL 15 (Docker)<br/>ideator_db")]
+    end
+
+    subgraph AI["Capa de Inteligencia Artificial"]
+        Foundry["Azure AI Foundry / Azure OpenAI<br/>(gpt-4o-mini / gpt-5-mini)"]
+        Fallbacks["Offline Deterministic Fallbacks<br/>(Resilient SVG & HTML Mockups)"]
+    end
+
+    UI -->|Bearer JWT + REST| Controllers
+    Controllers --> AuthFilter
+    Controllers --> SpecServices
+    SpecServices --> PG
+    SpecServices --> Orchestrator
+    Orchestrator -->|Online| Foundry
+    Orchestrator -.->|Offline / Fallback| Fallbacks
+    SpecServices --> UI
+    Preview -.-> UI
+    Export -.-> UI
+```
+
+---
+
+## Stack Tecnológico
+
+| Capa | Tecnologías Clave | Versión / Detalle |
+| :--- | :--- | :--- |
+| **Backend** | Java, Spring Boot | **Java 21**, **Spring Boot 3.4.5** |
+| **Seguridad** | Spring Security, JJWT | Autenticación Stateless JWT (HS256), BCrypt Password Hashing |
+| **Persistencia** | Spring Data JPA, Hibernate, PostgreSQL | PostgreSQL 15 en contenedor Docker |
+| **Frontend** | React, TypeScript, Vite | **React 18**, **TypeScript 5**, **Vite 6**, Tailwind CSS 3 |
+| **Visualización** | Lucide React, Mermaid, SVG Nativo, HTML5 Sandbox | Renderizado seguro de diagramas y wireframes interactivos |
+| **Inteligencia Artificial** | Azure OpenAI SDK, Azure AI Foundry | Soporte para `gpt-4o-mini` y orquestación multi-agente |
+| **Testing Backend** | JUnit 5, Mockito, AssertJ, Spring Test | 23 pruebas automatizadas (unitarias y de integración) |
+
+---
+
+## Estructura del Repositorio
 
 ```text
 .
-├── backend/                  # API Spring Boot (Maven)
+├── backend/
 │   ├── src/main/java/com/ideator/backend/
-│   │   ├── config/           # Seguridad, Azure OpenAI, seed
-│   │   ├── domain/           # Entidades JPA y enums
-│   │   ├── dto/              # Requests/Responses
-│   │   ├── exception/        # Manejo global de errores
-│   │   ├── repository/       # Repositorios Spring Data
-│   │   ├── security/         # JWT, filtro y UserDetails
-│   │   ├── service/          # Reglas de negocio
-│   │   └── web/              # Controladores REST
-│   ├── src/main/resources/application.yml
-│   ├── mvnw / mvnw.cmd
+│   │   ├── config/            # Configuración de Seguridad, Azure AI y CORS
+│   │   ├── domain/            # Entidades JPA (User, Project, ProjectMember)
+│   │   ├── dto/               # DTOs tipados por fase (DbSpec, UiMap, ArchSpec, etc.)
+│   │   ├── model/             # PhaseSpecification y entidades de soporte
+│   │   ├── repository/        # Repositorios Spring Data JPA
+│   │   ├── security/          # Filtros JWT y UserDetailsService
+│   │   ├── service/           # Lógica de orquestación y servicios por fase (A-H)
+│   │   └── web/               # Controladores REST (Auth, Project, Phase, Chat, Export)
+│   ├── src/test/java/         # 23 pruebas automatizadas (Servicios, Mocks, Controladores)
+│   ├── mvnw.cmd / mvnw        # Maven Wrapper
 │   └── pom.xml
-├── frontend/                 # SPA React + Vite
-│   ├── src/lib/api.ts        # Cliente Axios + Bearer token
-│   ├── src/services/         # Llamadas al backend
-│   ├── src/context/          # AuthContext (JWT)
-│   ├── src/pages/            # Login, Dashboard, ProjectView
-│   └── .env.example
-├── docker-compose.yml        # PostgreSQL 15 + volumen persistente
+├── frontend/
+│   ├── src/
+│   │   ├── components/        # Visores por fase (DatabaseSpecEditor, UiMapViewer, etc.)
+│   │   ├── context/           # AuthContext, ThemeContext
+│   │   ├── lib/               # Configuración de Axios con interceptor Bearer
+│   │   ├── pages/             # Login, Dashboard, ProjectView (Stepper A-H en vivo)
+│   │   ├── services/          # Clientes HTTP (auth, project, phaseService, markdown)
+│   │   └── types/             # Tipado TypeScript unificado (Phase, UiMap, DbSpec, etc.)
+│   ├── package.json
+│   └── vite.config.ts
+├── docker-compose.yml         # Contenedor PostgreSQL 15 con volumen persistente
 ├── .gitignore
 └── README.md
 ```
 
-## Requisitos
+---
 
-- Docker Desktop con Docker Compose v2
-- Java 21 (o superior) y Maven 3.9+ (`mvnw` incluido, no requiere Maven instalado)
-- Node.js 20+ y npm
+## Requisitos Previos
 
-## Puesta en marcha
+- **Java Development Kit (JDK) 21** configurado en `JAVA_HOME`.
+- **Node.js 20+** y `npm`.
+- **Docker Desktop** con soporte para Docker Compose.
+- Git.
 
-### 1. Base de datos
+---
 
-```bash
+## Inicio Rápido
+
+### 1. Iniciar la Base de Datos
+
+En la raíz del proyecto:
+
+```powershell
 docker compose up -d
+```
+
+Verifica que el contenedor `ideator-postgres` esté saludable en el puerto `5432`:
+
+```powershell
 docker compose ps
 ```
 
-El contenedor se llama `ideator-postgres` y usa:
-
-| Variable | Valor |
-| --- | --- |
-| `POSTGRES_DB` | `ideator_db` |
-| `POSTGRES_USER` | `ideator_user` |
-| `POSTGRES_PASSWORD` | `ideator_pass` |
-| Puerto host | `5432` (configurable con `POSTGRES_PORT`) |
-
-> Si ya tienes un PostgreSQL local usando el puerto 5432, ejecuta por ejemplo
-> `POSTGRES_PORT=5433 docker compose up -d` y define `SPRING_DATASOURCE_URL` con ese puerto al
-> arrancar el backend.
-
-El volumen persistente se llama `ideator_pgdata`. Para detener todo sin borrar datos usa
-`docker compose down`; para borrar también el volumen usa `docker compose down -v`.
-
-### 2. Backend
-
-En Windows PowerShell:
+### 2. Iniciar el Backend
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-En Linux/macOS:
+*La API estará disponible en `http://localhost:8080`.*
 
-```bash
-cd backend
-./mvnw spring-boot:run
-```
+### 3. Iniciar el Frontend
 
-La API queda disponible en `http://localhost:8080`.
-
-Si usaste un puerto distinto para PostgreSQL:
+En una terminal independiente:
 
 ```powershell
-$env:SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5433/ideator_db"
-.\mvnw.cmd spring-boot:run
-```
-
-Al arrancar se crean las tablas con Hibernate (`ddl-auto=update`) y, si `APP_SEED_ENABLED=true`
-(valor por defecto), un usuario y un proyecto demo:
-
-- Correo: `demo@ideator.com`
-- Contraseña: `Demo1234!`
-
-### 3. Frontend
-
-```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Abre `http://localhost:3000`. El cliente Axios usa `VITE_API_URL`, por defecto
-`http://localhost:8080/api`. Puedes copiar `frontend/.env.example` a `frontend/.env` para cambiarlo.
+*La aplicación web estará disponible en `http://localhost:3000`.*
 
-## Probar PostgreSQL
+### 4. Credenciales de Demostración
 
-Verificar que el contenedor está sano:
+El sistema incluye un seeder automático de desarrollo:
+- **Correo:** `demo@ideator.com`
+- **Contraseña:** `Demo1234!`
 
-```bash
-docker exec ideator-postgres pg_isready -U ideator_user -d ideator_db
-```
+---
 
-Abrir una consola SQL:
+## Variables de Entorno
 
-```bash
-docker exec -it ideator-postgres psql -U ideator_user -d ideator_db
-```
+### Backend (`application.yml` o Variables del Sistema)
 
-Comandos útiles dentro de `psql`:
+| Variable | Valor por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `SERVER_PORT` | `8080` | Puerto del servidor backend |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/ideator_db` | Cadena de conexión JDBC |
+| `SPRING_DATASOURCE_USERNAME` | `ideator_user` | Usuario de PostgreSQL |
+| `SPRING_DATASOURCE_PASSWORD` | `ideator_pass` | Contraseña de PostgreSQL |
+| `JWT_SECRET` | *Clave de desarrollo* | Clave criptográfica para firma de JWT (HS256) |
+| `AZURE_OPENAI_ENDPOINT` | *(Opcional)* | URL del recurso de Azure AI Foundry |
+| `AZURE_OPENAI_KEY` | *(Opcional)* | API Key del recurso Azure OpenAI |
+| `AZURE_OPENAI_DEPLOYMENT` | `gpt-4o-mini` | Nombre del modelo o despliegue configurado |
 
-```sql
-\dt
-select id, email, name, role, created_at from users;
-select id, name, status, owner_id, created_at from projects;
-select * from project_members;
-```
+> **Nota de Resiliencia:** Si las credenciales de Azure OpenAI no están presentes o se encuentran sin cuota, el backend conmuta de forma automática y transparente al motor de **fallbacks determinísticos**, garantizando la operatividad total del sistema y la generación de especificaciones, diagramas y mockups.
 
-También puedes consultar desde el host si tienes `psql`:
+---
 
-```bash
-psql -h localhost -p 5432 -U ideator_user -d ideator_db
-```
+## API REST
 
-## Probar los endpoints
+### Autenticación & Usuarios
+- `POST /api/v1/auth/register` — Registro de nuevo usuario.
+- `POST /api/v1/auth/login` — Autenticación y emisión de token JWT.
+- `GET /api/v1/auth/me` — Perfil del usuario autenticado.
 
-### Health general
+### Proyectos
+- `GET /api/v1/projects` — Listar proyectos del usuario.
+- `POST /api/v1/projects` — Crear nuevo proyecto.
+- `GET /api/v1/projects/{id}` — Detalle de proyecto.
+- `PUT /api/v1/projects/{id}` — Actualizar información de proyecto.
+- `DELETE /api/v1/projects/{id}` — Eliminar proyecto.
 
-```bash
-curl http://localhost:8080/api/health
-```
+### Pipeline de Especificaciones Técnicas (Fases A a H)
+- `GET /api/v1/projects/{projectId}/phases/{phase}` — Obtener el contenido estructurado de la fase indicada (`PHASE_A` a `PHASE_H`).
+- `POST /api/v1/projects/{projectId}/phases/{phase}/generate` — Disparar la generación asistida por IA para la fase.
+- `PUT /api/v1/projects/{projectId}/phases/{phase}` — Guardar manualmente ediciones técnicas sobre la fase.
 
-Respuesta esperada (resumida):
+### Exportación Técnica
+- `GET /api/v1/projects/{projectId}/export/markdown` — Genera y descarga el documento técnico consolidado en Markdown que engloba todas las fases del proyecto.
 
-```json
-{
-  "status": "UP",
-  "application": "ideator-api",
-  "database": { "status": "UP", "detail": "Conexión a PostgreSQL establecida" },
-  "azure": { "status": "NOT_CONFIGURED", "deployment": "gpt-4o-mini" }
-}
-```
+### Asistente & Chat
+- `POST /api/v1/chat` — Interacción contextual por chat con la IA respecto al proyecto y su arquitectura.
 
-En PowerShell puedes usar `Invoke-RestMethod http://localhost:8080/api/health`.
+---
 
-### Login y proyectos
+## Pruebas Automatizadas y Calidad
 
-PowerShell:
+El proyecto cuenta con una cobertura integral de pruebas automatizadas en backend y frontend para asegurar la no-regresión.
 
-```powershell
-$base = "http://localhost:8080/api"
-
-$login = Invoke-RestMethod -Method Post -Uri "$base/v1/auth/login" `
-  -ContentType "application/json" `
-  -Body (@{ email = "demo@ideator.com"; password = "Demo1234!" } | ConvertTo-Json)
-
-$headers = @{ Authorization = "Bearer $($login.token)" }
-
-Invoke-RestMethod -Uri "$base/v1/projects" -Headers $headers
-
-$nuevo = Invoke-RestMethod -Method Post -Uri "$base/v1/projects" -Headers $headers `
-  -ContentType "application/json" `
-  -Body (@{ name = "Mi primer proyecto"; description = "Prueba Sprint 1" } | ConvertTo-Json)
-
-Invoke-RestMethod -Uri "$base/v1/projects/$($nuevo.id)" -Headers $headers
-Invoke-RestMethod -Method Delete -Uri "$base/v1/projects/$($nuevo.id)" -Headers $headers
-```
-
-Sin cabecera `Authorization` el endpoint de proyectos responde `401`.
-
-### Registro de usuario
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Ana Perez","email":"ana@ideator.com","password":"Password123"}'
-```
-
-## Configurar y probar Azure OpenAI
-
-1. Crea un recurso de **Azure OpenAI** y despliega un modelo (por ejemplo `gpt-4o-mini`).
-2. Obtén el **endpoint** del recurso y una **key** desde Azure Portal.
-3. Exporta las variables y reinicia el backend.
-
-Windows PowerShell:
+### Ejecutar Pruebas del Backend (JUnit 5 & Mockito)
 
 ```powershell
-$env:AZURE_OPENAI_ENDPOINT = "https://<tu-recurso>.openai.azure.com/"
-$env:AZURE_OPENAI_KEY = "<tu-key>"
-$env:AZURE_OPENAI_DEPLOYMENT = "gpt-4o-mini"
 cd backend
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd test
 ```
 
-Linux/macOS:
+**Resultado:** **23 / 23 Tests Pasando (0 errores, 0 fallos)**
+- `ArchitectureSpecServiceTest`: Validación de generación y fallbacks de arquitectura y SVG.
+- `DatabaseSpecServiceTest`: Validación de generación de scripts DDL y ERD SVG.
+- `UiMapServiceTest`: Validación de serialización de mapa de navegación y wireframe HTML.
+- `FoundryAgentOrchestratorServiceTest`: Verificación de resiliencia ante ausencias de API key.
+- `MarkdownGeneratorServiceTest`: Integridad de exportación consolidada a Markdown.
+- `AzureAiChatServiceTest`: Verificación del flujo de mensajería contextual.
 
-```bash
-export AZURE_OPENAI_ENDPOINT="https://<tu-recurso>.openai.azure.com/"
-export AZURE_OPENAI_KEY="<tu-key>"
-export AZURE_OPENAI_DEPLOYMENT="gpt-4o-mini"
-cd backend && ./mvnw spring-boot:run
+### Ejecutar Verificación y Build del Frontend
+
+```powershell
+cd frontend
+npm run build
 ```
 
-Probar la conectividad real (hace una llamada corta al modelo):
+**Resultado:** Compilación TypeScript (`tsc`) sin errores de tipos y empaquetado Vite (`vite build`) exitoso.
 
-```bash
-curl http://localhost:8080/api/health/azure
-```
+---
 
-Posibles respuestas:
+## Solución de Problemas
 
-```json
-{ "status": "UP", "detail": "Azure OpenAI respondió: OK", "deployment": "gpt-4o-mini", "latencyMs": 850 }
-```
+1. **Conflicto de puerto PostgreSQL (5432):**
+   Si tienes otra instancia local de PostgreSQL activa, puedes mapear otro puerto en `docker-compose.yml` (ej. `5434:5432`) y definir:
+   ```powershell
+   $env:SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5434/ideator_db"
+   ```
 
-```json
-{ "status": "NOT_CONFIGURED", "detail": "Define AZURE_OPENAI_ENDPOINT y AZURE_OPENAI_KEY ..." }
-```
+2. **Error de variables de entorno no cargadas:**
+   Asegúrate de copiar `.env.example` a `.env` en `frontend/` si requieres cambiar la URL de la API:
+   ```powershell
+   VITE_API_URL=http://localhost:8080/api
+   ```
 
-```json
-{ "status": "DOWN", "detail": "No se pudo completar la llamada a Azure OpenAI", "error": "..." }
-```
+---
 
-El backend arranca aunque Azure no esté configurado; el cliente `OpenAIClient` solo se crea cuando
-existen `AZURE_OPENAI_ENDPOINT` y `AZURE_OPENAI_KEY` (ver `AzureAIConfig.java`).
+## Seguridad
 
-## Endpoints del Sprint 1
-
-| Método | Ruta | Autenticación | Descripción |
-| --- | --- | --- | --- |
-| GET | `/api/health` | Pública | Estado de la API y PostgreSQL |
-| GET | `/api/health/azure` | Pública | Diagnóstico real de Azure OpenAI |
-| POST | `/api/v1/auth/register` | Pública | Registro con rol `MEMBER` |
-| POST | `/api/v1/auth/login` | Pública | Login, devuelve JWT |
-| GET | `/api/v1/auth/me` | JWT | Usuario autenticado |
-| GET | `/api/v1/projects` | JWT | Proyectos propios o con membresía |
-| POST | `/api/v1/projects` | JWT | Crear proyecto |
-| GET | `/api/v1/projects/{id}` | JWT | Detalle con control de acceso |
-| PUT | `/api/v1/projects/{id}` | JWT (OWNER/EDITOR) | Actualizar proyecto |
-| DELETE | `/api/v1/projects/{id}` | JWT (OWNER) | Eliminar proyecto |
-
-## Variables de entorno del backend
-
-| Variable | Valor por defecto | Uso |
-| --- | --- | --- |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/ideator_db` | Conexión JDBC |
-| `SPRING_DATASOURCE_USERNAME` | `ideator_user` | Usuario PostgreSQL |
-| `SPRING_DATASOURCE_PASSWORD` | `ideator_pass` | Password PostgreSQL |
-| `JWT_SECRET` | secreto de desarrollo | Firma HMAC (mínimo 32 bytes) |
-| `JWT_EXPIRATION_MS` | `86400000` | Vigencia del token (24 h) |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Orígenes permitidos, separados por coma |
-| `APP_SEED_ENABLED` | `true` | Crea usuario/proyecto demo |
-| `AZURE_OPENAI_ENDPOINT` | vacío | Endpoint del recurso Azure OpenAI |
-| `AZURE_OPENAI_KEY` | vacío | Key del recurso |
-| `AZURE_OPENAI_DEPLOYMENT` | `gpt-4o-mini` | Nombre del deployment |
-| `POSTGRES_PORT` | `5432` | Puerto host de Docker Compose |
-
-> En producción cambia `JWT_SECRET`, las credenciales de PostgreSQL y desactiva el seed.
-
-## Verificación realizada
-
-- `backend`: compilación y empaquetado con Maven (`mvn -DskipTests package`) sobre Java 21.
-- `backend`: arranque contra PostgreSQL 15 en Docker, health `UP`, login demo, listado/creación/consulta/
-  eliminación de proyectos y `401` sin token.
-- `frontend`: `npm run build` (TypeScript + Vite) sin errores.
-
-## Alcance y siguientes pasos
-
-Sprint 1 entrega seguridad, persistencia y la base de integración con Azure OpenAI. El flujo
-conversacional de especificación (fases A-E), los colaboradores y la generación de documentos se
-implementarán en los siguientes sprints. Para producción se recomienda añadir Flyway/Liquibase en lugar
-de `ddl-auto=update`, refresh tokens y pruebas de integración con Testcontainers.
+- **Tokens JWT Stateless:** Caducidad configurada y validación criptográfica en cada petición protegida.
+- **Protección de Datos Sensibles:** Archivos de configuración `.env` y credenciales privadas ignorados en `.gitignore`.
+- **Renderizado Seguro de UI:** Los wireframes generados en HTML son aislados mediante sandboxing estricto (`sandbox="allow-same-origin"`) en el frontend para prevenir ejecución de scripts no autorizados.

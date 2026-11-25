@@ -44,3 +44,25 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Maven
+target/
+**/target/
+
+# Environment variables
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+
+# Sustentación & notas locales
+preguntas.md
+
+# Scripts locales con credenciales y perfiles locales (Nunca subir a Git)
+run-local.ps1
+backend/run-local.ps1
+application-local.yml
+application-*.local.yml
+
+
